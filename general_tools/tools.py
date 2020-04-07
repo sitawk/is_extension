@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup as bs
 import requests
 import re
 import json
-from general_tools.search_settings import *
+from root.general_tools.search_settings import *
 
 from fake_useragent import UserAgent
 ua = UserAgent()
@@ -131,9 +131,51 @@ COUNTRY_CONTEXTS = {
         },
         "india": {
             "phone_phrases": [],
-            "phone_patterns": ["\+\d{1,2}[\s\-]\d{4}[\s\-]\d{6}", "\+\d{2}[\s\-]\d{2}[\s\-]\d{3}[\s\-]\d{5}"],
-            "address_patterns": [],
-            "contact_text": []
+            "phone_patterns": [
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{3}[\s\-\.–]{1,3}\d{8}",
+                    "(?<!\d)\(?\+?\d{3}\)?[\s\-\.–]{1,3}\d{8}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{2}[\s\-\.–]{1,3}\d{8}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{2}[\s\-\.–]{1,3}\d{4}[\s\-\.–]{1,3}\d{4}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{10}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{5}[\s\-\.–]{1,3}\d{5}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{4}[\s\-\.–]{1,3}\d{3}[\s\-\.–]{1,3}\d{3}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{3}[\s\-\.–]{1,3}\d{4}[\s\-\.–]{1,3}\d{3}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{3}[\s\-\.–]{1,3}\d{3}[\s\-\.–]{1,3}\d{4}",
+                    "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{2}[\s\-\.–]{1,3}\d{7}(?!\d)",
+                    "(?<!\d)\(?\+?\d{4}\)?[\s\-\.–]{1,3}\d{7}",
+                ],
+            "address_patterns": [
+                "(" +
+                    "(" +
+                        "(address(?!\w)\s?:?)|" +
+                        "(#\s?\d)|" +
+                        "(plot(?!\w))|" +
+                        "(([^\n]{2,35}\s?,\s?)?[\w\-]+\s*(\n\s*th\s*\n)?\s*(?<!\w)floor(?!\w))|" +
+                        "(office\s?:)|" +
+                        "(Centre\s?:)|"
+                        "(no\.\s?\d)|" +
+                        "([^\n]{2,35}street(?!\w))|" +
+                        "([^\n]{2,35}road(?!\w))|" +
+                        "([^\n]{2,35}Rd(?!\w))|" +
+                        "([^\n]{2,35}highway(?!\w))" +
+                    ")" +
+                    "([\w\s:,\|\.\-/–\(\)&#'’]{10,140})" +
+                    "(" +
+                        "(india)|" +
+                        "((?<!\d)\d{3}[\s\-\.]?\d{3}(?!\d))|" +
+                        "((?<!\w)AP(?!\w))|((?<!\w)AR(?!\w))|((?<!\w)AS(?!\w))|((?<!\w)BR(?!\w))|((?<!\w)CG(?!\w))|((?<!\w)GA(?!\w))|((?<!\w)GJ(?!\w))|" +
+                        "((?<!\w)HR(?!\w))|((?<!\w)HP(?!\w))|((?<!\w)JH(?!\w))|((?<!\w)KA(?!\w))|((?<!\w)KL(?!\w))|((?<!\w)MP(?!\w))|((?<!\w)MH(?!\w))|" +
+                        "((?<!\w)MN(?!\w))|((?<!\w)ML(?!\w))|((?<!\w)MZ(?!\w))|((?<!\w)NL(?!\w))|((?<!\w)OD(?!\w))|((?<!\w)PB(?!\w))|((?<!\w)RJ(?!\w))|" +
+                        "((?<!\w)SK(?!\w))|((?<!\w)TN(?!\w))|((?<!\w)TS(?!\w))|((?<!\w)TR(?!\w))|((?<!\w)UP(?!\w))|((?<!\w)UK(?!\w))|((?<!\w)WB(?!\w))|" +
+                        "((?<!\w)AN(?!\w))|((?<!\w)CH(?!\w))|((?<!\w)DD(?!\w))|((?<!\w)DL(?!\w))|((?<!\w)JK(?!\w))|((?<!\w)LA(?!\w))|((?<!\w)LD(?!\w))|" +
+                        "((?<!\w)PY(?!\w))|(Andhra Pradesh)|(Arunachal Pradesh)|(Assam)|(Bihar)|(Chhattisgarh)|(Goa)|(Gujarat)|(Haryana)|(Himachal Pradesh)|" +
+                        "(Jharkhand)|(Karnataka)|(Kerala)|(Madhya Pradesh)|(Maharashtra)|(Manipur)|(Meghalaya)|(Mizoram)|(Nagaland)|(Odisha)|(Punjab)|" +
+                        "(Rajasthan)|(Sikkim)|(Tamil Nadu)|(Telangana)|(Tripura)|(Uttar Pradesh)|(Uttarakhand)|(West Bengal)|(Andaman and Nicobar Islands)|"
+                        "(Chandigarh)|(Dadra and Nagar Haveli and Daman and Diu)|(Delhi)|(Jammu and Kashmir)|(Ladakh)|(Lakshadweep)|(Puducherry)"
+                    ")" +
+                ")",
+            ],
+            "contact_text": ["contact", "contact us"]
         },
         "poland": {
             "phone_phrases": [],
@@ -287,8 +329,10 @@ COUNTRY_CONTEXTS = {
             "address_patterns": [
                 "(" + 
                     "(" + 
-                        "(Blvd\.)|(Blvrd\.)|(Calle)|(Av\.?(?!\w))|(AVENIDA)|(Avda\.)|(Cuarta)|((?<!\w)\w[ #\w\.\-,]{,25}Col\.)|(Calz\.)|([\s\w\.\-]{,30}s/n)|(Piso)|(Cd\.)|" + 
-                        "((?<!\w)\w[ #\w\.\-,]{,25}s/n)|(DIRECCIÓN\s?:?)|(address\s?:)|(Oficina\s?:?)" +
+                        "(Blvd\.)|(Blvrd\.)|(Calle)|(Av\.?(?!\w))|(AVENIDA)|" + 
+                        "(Avda\.)|(Cuarta)|((?<!\w)\w[ #\w\.\-,]{,25}Col\.)|" + 
+                        "(Calz\.)|([^\n]{,30}s/n)|(Piso)|(Cd\.)|" + 
+                        "(DIRECCIÓN\s?:?)|(address\s?:)|(Oficina\s?:?)" +
                     ")" + 
                     "(" + 
                         "[/,;\w\s\-\|\.]{5,120}" + 
@@ -630,7 +674,7 @@ def get_unique_social_media_links(original_social_links_list, composite_mode=Tru
 
 def get_unique_addresses_for_composite_data(original_address_list, country):
     if(country == "russia"):
-        from country_tools.russia.tools import get_russian_unique_addresses
+        from root.country_tools.russia.tools import get_russian_unique_addresses
         unique_function = get_russian_unique_addresses
 
     if(len(original_address_list) >= 2):
@@ -659,7 +703,7 @@ def get_unique_addresses_for_composite_data(original_address_list, country):
 
 def get_unique_phones_for_composite_data(original_phone_list, country):
     if(country == "russia"):
-        from country_tools.russia.tools import purify_russian_phones
+        from root.country_tools.russia.tools import purify_russian_phones
         unique_function = purify_russian_phones
 
     if(len(original_phone_list) >= 2):
@@ -710,7 +754,6 @@ def get_unique_emails_for_composite_data(original_email_list):
 
     else:
         return original_email_list 
-
 
 
 def json2composite(json_obj, country):
@@ -865,7 +908,7 @@ def json2composite(json_obj, country):
         out_json["matched_data"].append({"country-module": country_module_data})
 
         if(country == "russia"):
-            from country_tools.russia.tools import get_russian_country_module_composite_data
+            from root.country_tools.russia.tools import get_russian_country_module_composite_data
             composite_data_extention = get_russian_country_module_composite_data(country_module_data)
             if(composite_data_extention):
                 for key in composite_data_extention.keys():
@@ -886,7 +929,7 @@ def json2composite(json_obj, country):
                         
     # getting unique data from sorted data 
     if(country == "russia"):
-        from country_tools.russia.tools import get_russian_address_parts
+        from root.country_tools.russia.tools import get_russian_address_parts
 
         # translating addresses to russian
         for index, dic in enumerate(all_addresses):
@@ -907,7 +950,7 @@ def json2composite(json_obj, country):
         unique_phones = get_unique_phones_for_composite_data(all_phones, country)
 
         # finding vk_link
-        from country_tools.russia.tools import find_VK_link
+        from root.country_tools.russia.tools import find_VK_link
         vk_kink = find_VK_link(json_obj["input_data"]["domain"])
         if(vk_kink):
             out_json["composite"]["social_media_links"]["VK"] = [{"source": "google", "url":vk_kink}]
@@ -977,43 +1020,51 @@ def json2composite(json_obj, country):
     return {"result": out_json}
 
 
-def find_addresses(text, patterns, country):
+def find_addresses(text, patterns, country, is_contact_page=False):
     addresses = []
     if(country == "brazil"):
-        from country_tools.brazil.tools import find_brazilian_addresses
+        from root.country_tools.brazil.tools import find_brazilian_addresses
         addresses = find_brazilian_addresses(text, patterns)
     
     elif(country == "russia"):
-        from country_tools.russia.tools import find_russian_addresses
+        from root.country_tools.russia.tools import find_russian_addresses
         addresses = find_russian_addresses(text, patterns)
 
     elif(country == "vietnam"):
-        from country_tools.vietnam.tools import find_vietnamese_addresses
+        from root.country_tools.vietnam.tools import find_vietnamese_addresses
         addresses = find_vietnamese_addresses(text, patterns)
     
     elif(country == "mexico"):
-        from country_tools.mexico.tools import find_mexican_addresses
+        from root.country_tools.mexico.tools import find_mexican_addresses
         addresses = find_mexican_addresses(text, patterns)
+    
+    elif(country == "india"):
+        from root.country_tools.india.tools import find_indian_addresses
+        addresses = find_indian_addresses(text, patterns, is_contact_page)
     
     return addresses
 
 def purify_addresses(address_list, country, original_source):
     purified_addresses = []
     if(country == "brazil"):
-        from country_tools.brazil.tools import purify_brazilian_addresses
+        from root.country_tools.brazil.tools import purify_brazilian_addresses
         purified_addresses = purify_brazilian_addresses(address_list)
     
     elif(country == "russia"):
-        from country_tools.russia.tools import purify_russian_addresses
+        from root.country_tools.russia.tools import purify_russian_addresses
         purified_addresses = purify_russian_addresses(address_list, original_source)
 
     elif(country == "vietnam"):
-        from country_tools.vietnam.tools import purify_vietnamese_addresses
+        from root.country_tools.vietnam.tools import purify_vietnamese_addresses
         purified_addresses = purify_vietnamese_addresses(address_list)
     
     elif(country == "mexico"):
-        from country_tools.mexico.tools import purify_mexican_addresses
+        from root.country_tools.mexico.tools import purify_mexican_addresses
         purified_addresses = purify_mexican_addresses(address_list)
+    
+    elif(country == "india"):
+        from root.country_tools.india.tools import purify_indian_addresses
+        purified_addresses = purify_indian_addresses(address_list)
     
     return purified_addresses
 
@@ -1021,38 +1072,47 @@ def purify_addresses(address_list, country, original_source):
 def find_phones(text, patterns, country):
     phones = []
     if(country == "brazil"):
-        from country_tools.brazil.tools import find_brazilian_phones
+        from root.country_tools.brazil.tools import find_brazilian_phones
         phones = find_brazilian_phones(text, patterns)
     
     elif(country == "russia"):
-        from country_tools.russia.tools import find_russian_phones
+        from root.country_tools.russia.tools import find_russian_phones
         phones = find_russian_phones(text, patterns)
 
     elif(country == "vietnam"):
-        from country_tools.vietnam.tools import find_vietnamese_phones
+        from root.country_tools.vietnam.tools import find_vietnamese_phones
         phones = find_vietnamese_phones(text, patterns)
     
     elif(country == "mexico"):
-        from country_tools.mexico.tools import find_mexican_phones
+        from root.country_tools.mexico.tools import find_mexican_phones
         phones = find_mexican_phones(text, patterns)
+    
+    elif(country == "india"):
+        from root.country_tools.india.tools import find_indian_phones
+        phones = find_indian_phones(text, patterns)
     
     return phones
 
 def purify_phones(phone_list, country):
     purified_phones = []
     if(country == "brazil"):
-        from country_tools.brazil.tools import purify_brazilian_phones
+        from root.country_tools.brazil.tools import purify_brazilian_phones
         purified_phones = purify_brazilian_phones(phone_list)
     
     elif(country == "russia"):
-        from country_tools.russia.tools import purify_russian_phones
+        from root.country_tools.russia.tools import purify_russian_phones
         purified_phones = purify_russian_phones(phone_list)
 
     elif(country == "vietnam"):
-        from country_tools.vietnam.tools import purify_vietnamese_phones
+        from root.country_tools.vietnam.tools import purify_vietnamese_phones
         purified_phones = purify_vietnamese_phones(phone_list)
     
     elif(country == "mexico"):
-        from country_tools.mexico.tools import purify_mexican_phones
+        from root.country_tools.mexico.tools import purify_mexican_phones
         purified_phones = purify_mexican_phones(phone_list)
+    
+    elif(country == "india"):
+        from root.country_tools.india.tools import purify_indian_phones
+        purified_phones = purify_indian_phones(phone_list)
+
     return purified_phones
