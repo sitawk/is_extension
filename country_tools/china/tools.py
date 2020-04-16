@@ -155,11 +155,13 @@ def get_chinese_country_module_composite_data(country_data, composite_data):
 
     if(country_data.get("PhoneNumbers")):
         for phone in country_data["PhoneNumbers"]:
-            composite_data["composite"]["telephones"].append({"source": "country-module", "phone": phone})
+            if(phone):
+                composite_data["composite"]["telephones"].append({"source": "country-module", "phone": phone})
     
     if(country_data.get("Emails")):
         for email in country_data["Emails"]:
-            composite_data["composite"]["emails"].append({"source": "country-module", "email": email})
+            if(email):
+                composite_data["composite"]["emails"].append({"source": "country-module", "email": email})
     
     if(country_data.get("ImageUrl")):
         composite_data["composite"]["logo"].append({"source": "country-module", "data": {"url": country_data["ImageUrl"], "path": None}})

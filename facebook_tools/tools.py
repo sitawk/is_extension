@@ -178,7 +178,7 @@ def verify_facebook_link(link, domain, country, country_code):
                                 main_domain = domain.replace("www.", "")
                                 main_domain = main_domain.split("/")[0]
                                 for item in items:
-                                    if(re.search(domain, item.text)):
+                                    if(re.search(main_domain, item.text)):
                                         return True
                                 return False
                             else:
