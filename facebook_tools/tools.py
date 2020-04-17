@@ -145,7 +145,6 @@ def verify_facebook_link(link, domain, country, country_code):
                     if(about_soup):
                         fb_phone = facebook_phone(about_soup)
                         fb_address = facebook_adress(about_soup)
-                        print(fb_phone, fb_address)
 
                         if(fb_phone):
                             phone = "".join(d for d in fb_phone if(re.search("\d", d)))
@@ -186,3 +185,4 @@ def verify_facebook_link(link, domain, country, country_code):
                         else:
                             return True
     return False
+

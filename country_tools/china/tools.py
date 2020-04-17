@@ -2,7 +2,8 @@ from googletrans import Translator
 translator = Translator()
 import re
 
-from root.general_tools.tools import get_unique_addresses_for_composite_data
+from root.general_tools.composite_tools import get_unique_addresses_for_composite_data
+number_founder_pattern = "[\D]*(\d+)[\D]*"
 
 def get_chinese_unique_addresses(original_address_list, composite_mode=False):
     if(len(original_address_list) > 1):
@@ -113,7 +114,6 @@ def pick_matched_case_for_composite(country_module_data, domain):
 
 
 def get_chinese_country_module_composite_data(country_data, composite_data):
-    composite_data["matched_data"].append({"country_module": country_data})
     if(country_data.get("EnglishName")):
         composite_data["composite"]["company-name"].append({"source": "country-module", "data": country_data["EnglishName"]})
 
@@ -206,6 +206,6 @@ def get_chinese_country_module_composite_data(country_data, composite_data):
             except:
                 pass
 
-    composite_data["composite"]["addresses"] = get_unique_addresses_for_composite_data(composite_data["composite"]["addresses"], "russia")
+    composite_data["composite"]["addresses"] = get_unique_addresses_for_composite_data(composite_data["composite"]["addresses"], "china")
 
     return composite_data
