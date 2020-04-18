@@ -25,7 +25,8 @@ geocoding_api_key = 'AIzaSyAURUorT5giGQqfBfcPqJmpYg2tHYOPL8g'
 COUNTRY_CONTEXTS = {
     "countries": {
         "usa": {
-            "phone_prefix": "1",
+            "language": "en",
+            "country_code": "1",
             "phone_phrases": [],
             "phone_patterns": ["\\+?\\d?[-\\.]?\\d{3}.\\d{3}.\\d{4}"],
             "address_patterns": ["address:.+", "Address:.+"],
@@ -42,7 +43,8 @@ COUNTRY_CONTEXTS = {
             "contact_text": ["contact", "contacto", "contacts", "contact us"]
         },
         "brazil": {
-            "phone_prefix": "55",
+            "language": "pt",
+            "country_code": "55",
             "phone_phrases": ["telefone:", "fone:", "Fone:", "Telefone:"],
             "phone_patterns": [
                 "(\+?(\d{2}\s)?\(?\d{2,3}\)?(\)|\s|-|\.)\s?(-|\.)?\s?\d{2,3}\s?(-|\.)?\s?\d{2}(\s|-|\.)\s?(-|\.)?\s?\d{2}\s?(-|\.)?\s?\d{2})",
@@ -78,14 +80,16 @@ COUNTRY_CONTEXTS = {
             "contact_text": ["contato", "Fale Conosco", "Contatos"]
         },
         "china": {
-            "phone_prefix": "86",
+            "language": "zh-cn",
+            "country_code": "86",
             "phone_phrases": ["电话"],
             "phone_patterns": [],
             "address_patterns": ["地址"],
             "contact_text": ["联系方式", "联系我们"]
         },
         "russia": {
-            "phone_prefix": "7",
+            "language": "ru",
+            "country_code": "7",
             "phone_phrases": ["Телефон"],
             "phone_patterns": [
                 "(?<!\d)(\+?\s?\d?[\-\.\s]*\(?\s?\d{3}[\)\-\.\s]+\d{3}[\-\.\s]*\d{2}[\-\.\s]*\d{2})(?!\d)",
@@ -133,7 +137,8 @@ COUNTRY_CONTEXTS = {
             "contact_text": ["КОНТАКТЫ", "Контакты", "contact"]
         },
         "india": {
-            "phone_prefix": "91",
+            "language": "en",
+            "country_code": "91",
             "phone_phrases": [],
             "phone_patterns": [
                     "(?<!\d)\(?\+?\d{2}\)?[\s\-\.–]{1,3}\d{3}[\s\-\.–]{1,3}\d{8}",
@@ -182,14 +187,14 @@ COUNTRY_CONTEXTS = {
             "contact_text": ["contact", "contact us"]
         },
         "poland": {
-            "phone_prefix": "48",
+            "country_code": "48",
             "phone_phrases": [],
             "phone_patterns": ["\d{2}[\s\-]\d{3}[\s\-]\d{2}[\s\-]\d{2}"],
             "address_patterns": [],
             "contact_text": ["Skontaktuj", "Skontaktuj się z nami"]
         },
         "spain": {
-            "phone_prefix": "34",
+            "country_code": "34",
             "phone_phrases": [],
             "phone_patterns": ["(\d{3}[\s\-]\d{3}[\s\-]\d{3})",
                                "(\+\d{2}[\s\-]\(?\d{2,3}\)[\s\-]\d{3,4}[\s\-]\d{3,4})",
@@ -198,21 +203,22 @@ COUNTRY_CONTEXTS = {
             "contact_text": ["contacta"]
         },
         "colombia": {
-            "phone_prefix": "57",
+            "country_code": "57",
             "phone_phrases": ["Teléfono"],
             "phone_patterns": ["(\d{3}[\s\-]\d{3}[\s\-]\d{3})", "\(\+?\d+\)\s?\(\d+\)\s\d{3}[\s\-]?\d{,4}"],
             "address_patterns": ["Av[\.]?\s.+","Dirección:\s.+", "Calle[\s].+"],
             "contact_text": ["contactenos"]
         },
         "uae": {
-            "phone_prefix": "971",
+            "country_code": "971",
             "phone_phrases": [],
             "phone_patterns": ["\+\d{3}\s\d\s\d{7}", "\d{2,3}[\s\-]\d{7}", "\+\d{3}\s\d\s\d{2}\s\d{2}\s\d{3}", "\+?\d{2,3}[\s\-]\d[\s\-]\d{3,4}[\s\-]\d{3,4}"],
             "address_patterns": ["Av[\.]?\s.+","Dirección:\s.+", "Calle[\s].+"],
             "contact_text": ["contactenos"]
         },
         "vietnam": {
-            "phone_prefix": "84",
+            "language": "vi",
+            "country_code": "84",
             "phone_phrases": [],
             "phone_patterns": [
                 "((?<!\d)\(?\+?\d{2}[\s\.\-]+\d{3}\)?([\s\.\-]*\d){8}(?!\d))",
@@ -321,7 +327,8 @@ COUNTRY_CONTEXTS = {
             "contact_text": ["Liên hệ", "CONTACT US", "contact"]
         },
         "mexico": {
-            "phone_prefix": "52",
+            "language": "es",
+            "country_code": "52",
             "phone_phrases": [],
             "phone_patterns": [
                 "(\+?\d{2}\s?[\.\-]?\s?\(?\d{2}\)?\s?[\.\-]?\s?\d{4}\s?[\.\-]?\s?\d{4})",
@@ -608,21 +615,24 @@ country_dial_codes = {
 }
 
 # FUNCTIONS
-def getHtmlResponse(url, cookies={}, use_proxy=False):
+def getHtmlResponse(url, cookies={}, use_proxy=False, stream=False):
     headers = {
         'User-Agent':ua.random,
     }
     if(use_proxy):
-        payload = {'api_key': proxy_api_key, 'url': url, }
+        proxies = {
+            "http": "http://scraperapi:a057568fadc410eeffbfa8c72a1149js@proxy-server.scraperapi.com:8001",
+            "https": "http://scraperapi:a057568fadc410eeffbfa8c72a1149js@proxy-server.scraperapi.com:8001"
+        }
         try:
-            return requests.get('http://api.scraperapi.com', params=payload, timeout=25, headers=headers)
+            return requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream, proxies=proxies, verify=False)
         except Exception as e:
             print("Error in getHtmlResponse() for url >>>", url, "<<<")
             print(str(e))
             return None
     else:
         try:
-            return requests.get(url, timeout=25, headers=headers, cookies=cookies)
+            return requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream)
         except Exception as e:
             print("Error in getHtmlResponse() for url >>>", url, "<<<")
             print(str(e))
@@ -644,8 +654,27 @@ def make_soup(url, cookies={}, use_proxy=False):
             return soup
     return soup
 
-def save_logo(url, domain):
-    return ''
+def save_logo(image_url, org_id, prefix=''):
+    pass
+    '''
+    x = image_url.split('.')[-1]
+    ext = x[-3:]
+    try:
+        if ext[-3:] in ['png', 'jpg', 'peg']:
+            filename = prefix + org_id + '.' + ext
+            file_path = MEDIA_ROOT + '/company_logos/' + filename
+            urllib.request.urlretrieve(image_url, file_path)
+        else:
+            filename = prefix + org_id + '.jpg'
+            file_path = MEDIA_ROOT + '/company_logos/' + filename
+            response = requests.get(image_url, stream=True)
+            with open(file_path, 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+            del response
+        return filename
+    except:
+        return ''
+    '''
 
 def getDomainName(url, TLD=True):
     match = re.search('(https?://)?(www\\.)?([A-Za-z_0-9-]+)((\\.[A-Za-z]+)+)', url)

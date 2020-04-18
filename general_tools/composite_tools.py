@@ -1,6 +1,8 @@
 from root.facebook_tools.tools import verify_facebook_link
 from root.general_tools.tools import *
 import re
+import os
+import shutil
 
 from googletrans import Translator
 translator = Translator()
@@ -98,7 +100,7 @@ def get_country_module_composite_data(country_module_data, composite_data, count
     elif(country == "china"):
         from root.country_tools.china.tools import pick_matched_case_for_composite, get_chinese_country_module_composite_data
 
-        selected_data = pick_matched_case_for_composite(country_module_data, composite_data["input_data"]["domain"])
+        selected_data = pick_matched_case_for_composite(country_module_data, composite_data["input_data"]["website"])
         composite_data = get_chinese_country_module_composite_data(selected_data, composite_data)
     
     return composite_data
@@ -159,13 +161,19 @@ def purify_composite_data(composite_data):
     return composite_data
 
 
-def is_phone_country_matched(phone, phone_prefix):
-    phone = re.sub("\D", "", phone)
-    phone = re.sub("^0", "", phone)
-    if(phone.startswith(phone_prefix)):
-        return True
-    else:
-        return False
+def is_phone_country_matched(phone, country_code):
+    if(phone.startswith("+")):
+        all_digit = re.sub("\D", "", phone)
+        all_digit = re.sub("^0*", "", all_digit)
+        if(not all_digit.startswith(country_code)):
+            return False
+    elif(re.search(".*\d+.*\(", phone)):
+        all_digit = re.sub("\D", "", phone)
+        all_digit = re.sub("^0*", "", all_digit)
+        if(not all_digit.startswith(country_code)):
+            return False
+    
+    return True
 
 def is_address_country_matched(address, country, language, is_address_dict):
     if(is_address_dict):
@@ -230,7 +238,37 @@ def purify_matched_unmatched_data(data):
             final_data[k] = new_data[k]
     return final_data
 
-def json2composite(json_obj, country, language):
+def save_logo_from_composite_data(composite_data, file_name):
+    base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_logos")
+    if(not os.path.exists(os.path.join(base_path))):
+        os.makedirs(os.path.join(base_path))
+
+    logo_url = None
+    if(composite_data["composite"].get("logo")):
+        for logo in composite_data["composite"]["logo"]:
+            if(logo["source"] == "company-website"):
+                logo_url = logo["data"]["url"]
+                break
+        if(not logo_url):
+            logo_url = composite_data["composite"]["logo"][0]["data"]["url"]
+            
+        x = logo_url.split('.')[-1]
+        ext = x[-3:]
+        if ext[-3:] in ['png', 'jpg', 'peg']:
+            file_path = os.path.join(base_path, file_name + '.' + ext)
+        else:
+            file_path = os.path.join(base_path, file_name + '.jpg')
+
+        response = getHtmlResponse(logo_url, stream=True, use_proxy=False)
+        with open(file_path, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+        del response
+    
+    else:
+        print("logo not found")
+
+
+def json2composite(json_obj, country):
     out_json = { 
         "composite": {
             "website-title": "",
@@ -269,6 +307,7 @@ def json2composite(json_obj, country, language):
     }
 
     country_context = load_country_context(country, add_with_global_setting=False)
+    language = country_context["language"]
 
     # getting website data
     if(json_obj.get("website_data")):
@@ -283,7 +322,7 @@ def json2composite(json_obj, country, language):
             unmatched_data["website_data"]["phones"] = []
 
             for phone in web_data["phones"]:
-                if(is_phone_country_matched(phone, country_context["phone_prefix"])):
+                if(is_phone_country_matched(phone, country_context["country_code"])):
                     matched_data["website_data"]["phones"].append(phone)
                     out_json["composite"]["telephones"].append({"source": "company-website", "phone": phone})
                 else:
@@ -377,7 +416,7 @@ def json2composite(json_obj, country, language):
         out_json["matched_data"].append({"facebook": facebook_data})
 
         for dic in facebook_data:
-            verified = verify_facebook_link(dic["URL"], out_json["input_data"]["domain"], country, country_context["phone_prefix"])
+            verified = verify_facebook_link(dic["URL"], out_json["input_data"]["website"], country, country_context["country_code"])
             if(verified):
                 matched_data["facebook_data"].append(dic)
                 if(dic.get("address")):
@@ -421,7 +460,7 @@ def json2composite(json_obj, country, language):
                 unmatched_data["infobox_info"]["address"] = info_box_data["address"]
 
         if(info_box_data.get("phone")):
-            if(is_phone_country_matched(info_box_data["phone"], country_context["phone_prefix"])):
+            if(is_phone_country_matched(info_box_data["phone"], country_context["country_code"])):
                 matched_data["infobox_info"]["phone"] = info_box_data["phone"]
                 out_json["composite"]["telephones"].append({"source": "info-box", "phone": info_box_data["phone"]})
             else:
@@ -437,5 +476,9 @@ def json2composite(json_obj, country, language):
     out_json = purify_composite_data(out_json)
     out_json["matched_data"] = purify_matched_unmatched_data(matched_data)
     out_json["unmatched_data"] = purify_matched_unmatched_data(unmatched_data)
+
+    # saving logo
+    logo_name = "logo_name"
+    save_logo_from_composite_data(out_json, logo_name)
 
     return {"result": out_json}
