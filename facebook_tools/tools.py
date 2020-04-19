@@ -77,6 +77,22 @@ def facebook_logo(url):
 
     return 'http://graph.facebook.com/' + fb_id + '/picture?type=large'
 
+def get_facebook_logo(url):
+    response = getHtmlResponse(url, use_proxy=False)
+    if(response):
+        soup = getSoup(response)
+        if(soup):
+            body = soup.body
+            img = body.find("img")
+            if(img):
+                return img.get("src")
+            else:
+                return None
+        else:
+            return None
+    else:
+        return None
+
 def facebook_industry(soup):
     res = soup.select('._5m_o')
     sss = ''
@@ -113,7 +129,10 @@ def facebook_info(fb_url, domain, email_validation=False):
         fb_email = facebook_email(about_soup, email_validation=email_validation)
         fb_foundation_year = facebook_foundation_year(about_soup)
         fb_industry = facebook_industry(about_soup)
-        fb_logo = facebook_logo(about_link)
+        #fb_logo = facebook_logo(about_link)
+        fb_logo = get_facebook_logo(fb_url)
+        if(not fb_logo):
+            fb_logo = ""
         saved_logo = save_logo(fb_logo, domain)
         fb_more = facebook_more_info(about_soup)
 
