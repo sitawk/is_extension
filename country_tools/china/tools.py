@@ -2,6 +2,7 @@ from googletrans import Translator
 translator = Translator()
 import re
 
+from root.general_tools.tools import getHtmlResponse, getSoup, stringCookiesToDict
 from root.general_tools.composite_tools import get_unique_addresses_for_composite_data
 number_founder_pattern = "[\D]*(\d+)[\D]*"
 
@@ -209,3 +210,79 @@ def get_chinese_country_module_composite_data(country_data, composite_data):
     composite_data["composite"]["addresses"] = get_unique_addresses_for_composite_data(composite_data["composite"]["addresses"], "china")
 
     return composite_data
+
+
+def get_baidu_result_divs(url, domain):
+    response = getHtmlResponse(url, use_proxy=True)
+    if(response):
+        soup = getSoup(response)
+        if(soup):
+            result_container_divs = soup.find_all('div', class_='c-container')
+            result_container_divs = [container for container in result_container_divs if domain in container.text]
+            return result_container_divs
+        else:
+            return []
+    else:
+        return []
+
+def extract_legal_names_baidu(div):
+    name = None
+    title = div.find('h3', {'class': 't'}).get_text()
+    if("限公司" in title):
+        name = title.split("限公司")[0] + "限公司"
+        if("-" in name):
+            name = name.split("-")[1]
+        if("_" in name):
+            name = name.split("_")[1]
+    return name
+
+def get_legal_name_from_baidu(domain):
+    baidu_search_url = "https://www.baidu.com/s?wd='{}' site:www.qichacha.com"
+    url = baidu_search_url.format(domain).replace(" ", "%20")
+    print(url)
+    names = []
+
+    divs = get_baidu_result_divs(url, domain)
+    if(divs):
+        for div in divs:
+            name = extract_legal_names_baidu(div)
+            if(name):
+                names.append(name)
+    return list(set(names))
+
+
+def scrape_qichacha(query, search_domain=False):
+    qichacha_search_url = 'https://www.qichacha.com/search?key={}'
+    my_qichacha_string_cookies = "QCCSESSID=943estaujkcnlmj6617l1qj0d3; UM_distinctid=1719c8ea6862e9-0116078de66c3-5313f6f-100200-1719c8ea68871; CNZZDATA1254842228=997063605-1587466246-%7C1587466246; zg_did=%7B%22did%22%3A%20%221719c8ea8c221b-05c25cf449a31-5313f6f-100200-1719c8ea8c35c9%22%7D; hasShow=1; _uab_collina=158746952916961739338216; acw_tc=2ff62b9e15874695316588568e4820daa195ec4fb6592712661a92bf35; Hm_lvt_78f134d5a9ac3f92524914d0247e70cb=1587469530,1587470690; Hm_lpvt_78f134d5a9ac3f92524914d0247e70cb=1587470721; zg_de1d1a35bfa24ce29bbf2c7eb17e6c4f=%7B%22sid%22%3A%201587469527239%2C%22updated%22%3A%201587470730031%2C%22info%22%3A%201587469527244%2C%22superProperty%22%3A%20%22%7B%7D%22%2C%22platform%22%3A%20%22%7B%7D%22%2C%22utm%22%3A%20%22%7B%7D%22%2C%22referrerDomain%22%3A%20%22%22%2C%22cuid%22%3A%20%221056ee824ee53e234a33f1988ac0ea63%22%7D"
+
+    url = qichacha_search_url.format(query)
+    print(url)
+    lst = []
+    response = getHtmlResponse(url, cookies=stringCookiesToDict(my_qichacha_string_cookies), use_proxy=True)
+    if(response):
+        soup = getSoup(response)
+        if(soup):
+            table = soup.find("table")
+            if(table):
+                td_list = table.find_all("td")
+                if(td_list):
+                    if search_domain:
+                        query = query.replace('www.', "")
+
+                    for td in td_list:
+                        matched_tag = td.find(text=re.compile(query))   # looking for tags with query provided in text
+                        if matched_tag:
+                            try:
+                                imgUrl = matched_tag.find_parent('tr').find('img')['src']
+                            except AttributeError:
+                                imgUrl = ''
+                            parent_td = matched_tag.find_parent('td')
+                            data = extract_td(parent_td, query, search_domain)
+                            data['ImageUrl'] = imgUrl
+                            lst.append(data)
+                
+            else:
+                print('No Table found!')
+    return lst
+
+

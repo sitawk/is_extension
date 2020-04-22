@@ -616,6 +616,7 @@ country_dial_codes = {
 
 # FUNCTIONS
 def getHtmlResponse(url, cookies={}, use_proxy=False, stream=False):
+    HTML_RESPONSE_STATUS_CODE[0] = None
     headers = {
         'User-Agent':ua.random,
     }
@@ -625,17 +626,23 @@ def getHtmlResponse(url, cookies={}, use_proxy=False, stream=False):
             "https": "http://scraperapi:a057568fadc410eeffbfa8c72a1149js@proxy-server.scraperapi.com:8001"
         }
         try:
-            return requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream, proxies=proxies, verify=False)
+            response = requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream, proxies=proxies, verify=False)
+            HTML_RESPONSE_STATUS_CODE[0] = response.status_code
+            return response
         except Exception as e:
             print("Error in getHtmlResponse() for url >>>", url, "<<<")
             print(str(e))
+            HTML_RESPONSE_STATUS_CODE[0] = "Exception"
             return None
     else:
         try:
-            return requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream)
+            response = requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream)
+            HTML_RESPONSE_STATUS_CODE[0] = response.status_code
+            return response
         except Exception as e:
             print("Error in getHtmlResponse() for url >>>", url, "<<<")
             print(str(e))
+            HTML_RESPONSE_STATUS_CODE[0] = "Exception"
             return None
 
 def getSoup(response):
@@ -1090,3 +1097,15 @@ def purify_phones(phone_list, country):
         purified_phones = purify_indian_phones(phone_list)
 
     return purified_phones
+
+def stringCookiesToDict(string_cookies):
+    '''
+    convert string formatted cookies to dictionary form
+    '''
+    itemDict = {}
+    items = string_cookies.split(';')
+    for item in items:
+        key = item.split('=')[0].replace(' ', '')
+        value = item.split('=')[1]
+        itemDict[key] = value
+    return itemDict
