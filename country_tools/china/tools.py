@@ -2,7 +2,7 @@ from googletrans import Translator
 translator = Translator()
 import re
 
-from root.general_tools.tools import getHtmlResponse, getSoup, stringCookiesToDict
+from root.general_tools.tools import getHtmlResponse, getSoup, stringCookiesToDict, getSeleniumBrowser
 from root.general_tools.composite_tools import get_unique_addresses_for_composite_data
 number_founder_pattern = "[\D]*(\d+)[\D]*"
 
@@ -212,12 +212,40 @@ def get_chinese_country_module_composite_data(country_data, composite_data):
     return composite_data
 
 
+
+from fake_useragent import UserAgent
+ua = UserAgent()
+
+userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+headers = {
+    'Host':'www.baidu.com',
+    'User-Agent':ua.random,
+}
+
+'''
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'Accept-Encoding: gzip, deflate, br
+    'Accept-Language: en-US,en;q=0.9
+    'Connection: keep-alive
+    'Cookie: BIDUPSID=D4562B3D765D9EE8865A416B207004A8; PSTM=1587546470; BAIDUID=D4562B3D765D9EE89A3F2E290EEA5717:FG=1; BD_UPN=12314753; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; H_PS_PSSID=31358_1450_31325_21117_31254_31421_31341_31270_30824_26350_31163_31196; delPer=0; BD_CK_SAM=1; PSINO=7; BD_HOME=1; BDSVRTM=13
+    'Host: www.baidu.com
+    'Referer: https://www.baidu.com/
+    'Sec-Fetch-Dest: document
+    'Sec-Fetch-Mode: navigate
+    'Sec-Fetch-Site: same-origin
+    'Upgrade-Insecure-Requests: 1
+    'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.113 Safari/537
+'''
+
 def get_baidu_result_divs(url, domain):
-    response = getHtmlResponse(url, use_proxy=True)
+    response = getHtmlResponse(url, use_proxy=True, headers=headers)
     if(response):
         soup = getSoup(response)
+        print(soup.title)
         if(soup):
             result_container_divs = soup.find_all('div', class_='c-container')
+            for d in result_container_divs:
+                print(d.text[:100], "\n")
             result_container_divs = [container for container in result_container_divs if domain in container.text]
             return result_container_divs
         else:
@@ -238,7 +266,9 @@ def extract_legal_names_baidu(div):
 
 def get_legal_name_from_baidu(domain):
     baidu_search_url = "https://www.baidu.com/s?wd='{}' site:www.qichacha.com"
-    url = baidu_search_url.format(domain).replace(" ", "%20")
+    #baidu_search_url = 'https://www.baidu.com/s?ie=utf-8&f=8&rsv_idx=1&tn=baidu&wd={0}%20site%3A{1}&oq={0}'
+    #baidu_search_url = 'https://www.baidu.com/s?ie=utf-8&f=8&rsv_idx=1&tn=baidu&wd=%22{0}%22%20site%3A{1}&fenlei=256&rqlang=cn&rsv_enter=0&rsv_dl=tb&oq=%2526quot%253Bwww.hdbp.com%2526quot%253B%2520site%253Awww.qichacha.com'
+    url = baidu_search_url.format(domain, "www.qichacha.com").replace(" ", "%20")
     print(url)
     names = []
 
@@ -248,6 +278,51 @@ def get_legal_name_from_baidu(domain):
             name = extract_legal_names_baidu(div)
             if(name):
                 names.append(name)
+    return list(set(names))
+
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+baidu_home_url = "https://www.baidu.com/"
+
+def get_legal_name_from_baidu_using_selenium(domain):
+    names = []
+    q = "'{}' site:www.qichacha.com".format(domain)
+    browser = getSeleniumBrowser(headless=True)
+    browser.get(baidu_home_url)
+
+    search_input = browser.find_element(By.CLASS_NAME, "s_ipt")
+    #print('search input enabled? ==>', search_input.is_enabled())
+
+    #for i in range(50):
+    #    search_input.send_keys(u'\ue003')   # clear search input for new search(back-space key)
+    
+    search_input.send_keys(q)
+    search_input.send_keys(u'\ue007')    #press Enter key
+    browser.implicitly_wait(10)
+
+    try:
+        result_divs = WebDriverWait(browser, 15).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".result.c-container"))
+        )
+        result_divs = browser.find_elements_by_css_selector(".result.c-container")
+        
+        for div in result_divs:
+            if(domain in div.text):
+                title_tag = div.find_element_by_css_selector("h3.t")
+                title = title_tag.text
+                if("限公司" in title):
+                    name = title.split("限公司")[0] + "限公司"
+                    if("-" in name):
+                        name = name.split("-")[1]
+                    if("_" in name):
+                        name = name.split("_")[1]
+                    names.append(name)
+    except Exception as e:
+        print("error : ", str(e))
+        print("divs not found...")
     return list(set(names))
 
 

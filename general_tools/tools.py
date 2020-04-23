@@ -615,34 +615,27 @@ country_dial_codes = {
 }
 
 # FUNCTIONS
-def getHtmlResponse(url, cookies={}, use_proxy=False, stream=False):
-    HTML_RESPONSE_STATUS_CODE[0] = None
-    headers = {
-        'User-Agent':ua.random,
-    }
+def getHtmlResponse(url, cookies={}, headers=None, use_proxy=False, stream=False):
+    if(not headers):
+        headers = {'User-Agent':ua.random,}
+
     if(use_proxy):
         proxies = {
             "http": "http://scraperapi:a057568fadc410eeffbfa8c72a1149js@proxy-server.scraperapi.com:8001",
             "https": "http://scraperapi:a057568fadc410eeffbfa8c72a1149js@proxy-server.scraperapi.com:8001"
         }
         try:
-            response = requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream, proxies=proxies, verify=False)
-            HTML_RESPONSE_STATUS_CODE[0] = response.status_code
-            return response
+            return requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream, proxies=proxies, verify=False)
         except Exception as e:
             print("Error in getHtmlResponse() for url >>>", url, "<<<")
             print(str(e))
-            HTML_RESPONSE_STATUS_CODE[0] = "Exception"
             return None
     else:
         try:
-            response = requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream)
-            HTML_RESPONSE_STATUS_CODE[0] = response.status_code
-            return response
+            return requests.get(url, timeout=25, headers=headers, cookies=cookies, stream=stream)
         except Exception as e:
             print("Error in getHtmlResponse() for url >>>", url, "<<<")
             print(str(e))
-            HTML_RESPONSE_STATUS_CODE[0] = "Exception"
             return None
 
 def getSoup(response):
@@ -1109,3 +1102,19 @@ def stringCookiesToDict(string_cookies):
         value = item.split('=')[1]
         itemDict[key] = value
     return itemDict
+
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+def getSeleniumBrowser(headless=False):
+    from root.general_tools.search_settings import CHROME_DRIVER_LOCATION
+    options = Options()
+    if(headless):
+        options.headless = True   # run driver in headless mode
+
+    options.add_argument('log-level=3')   # disable loging for info, and warning levels
+
+    browser = webdriver.Chrome(executable_path=CHROME_DRIVER_LOCATION, chrome_options=options) 
+    return browser
+
