@@ -284,33 +284,56 @@ def get_legal_name_from_baidu(domain):
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import time
+import random
 
 baidu_home_url = "https://www.baidu.com/"
 
-def get_legal_name_from_baidu_using_selenium(domain):
+def get_legal_name_from_baidu_using_selenium(domain, check_for_matched_domain=False):
+    page_loaded = False
+    max_try = 10
+    try_counter = 0
+    while((not page_loaded) and (try_counter < 10)):
+        try_counter += 1
+        try:
+            browser = getSeleniumBrowser(headless=True)
+            browser.get(baidu_home_url)
+            search_input = browser.find_element(By.CLASS_NAME, "s_ipt")
+            #print('search input enabled? ==>', search_input.is_enabled())
+            page_loaded = True
+        except:
+            browser.close()
+            print("baidu main page not loaded successfully...")
+
+    if(not page_loaded):
+        print("browser not loaded successfully after", try_counter, " try")
+        return None
+
     names = []
     q = "'{}' site:www.qichacha.com".format(domain)
-    browser = getSeleniumBrowser(headless=True)
-    browser.get(baidu_home_url)
-
-    search_input = browser.find_element(By.CLASS_NAME, "s_ipt")
-    #print('search input enabled? ==>', search_input.is_enabled())
-
-    #for i in range(50):
-    #    search_input.send_keys(u'\ue003')   # clear search input for new search(back-space key)
-    
+    print(q)
     search_input.send_keys(q)
     search_input.send_keys(u'\ue007')    #press Enter key
-    browser.implicitly_wait(10)
 
     try:
-        result_divs = WebDriverWait(browser, 15).until(
+        result_divs = WebDriverWait(browser, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, ".result.c-container"))
         )
         result_divs = browser.find_elements_by_css_selector(".result.c-container")
         
         for div in result_divs:
-            if(domain in div.text):
+            if(check_for_matched_domain):
+                if(domain in div.text):
+                    title_tag = div.find_element_by_css_selector("h3.t")
+                    title = title_tag.text
+                    if("限公司" in title):
+                        name = title.split("限公司")[0] + "限公司"
+                        if("-" in name):
+                            name = name.split("-")[1]
+                        if("_" in name):
+                            name = name.split("_")[1]
+                        names.append(name)
+            else:
                 title_tag = div.find_element_by_css_selector("h3.t")
                 title = title_tag.text
                 if("限公司" in title):
@@ -324,6 +347,97 @@ def get_legal_name_from_baidu_using_selenium(domain):
         print("error : ", str(e))
         print("divs not found...")
     return list(set(names))
+
+
+def get_legal_name_from_baidu_using_selenium_by_list(domain_list, check_for_matched_domain=False, result_reloading_pause_time=3):
+    page_loaded = False
+    max_try = 10
+    try_counter = 0
+    while((not page_loaded) and (try_counter < 10)):
+        try_counter += 1
+        try:
+            browser = getSeleniumBrowser(headless=True)
+            browser.get(baidu_home_url)
+            search_input = browser.find_element(By.CLASS_NAME, "s_ipt")
+            #print('search input enabled? ==>', search_input.is_enabled())
+            page_loaded = True
+        except:
+            browser.close()
+            print("baidu main page not loaded successfully...")
+
+    if(not page_loaded):
+        print("browser not loaded successfully after", try_counter, " try")
+        return None
+
+    result = []
+    for domain in domain_list[:10]:
+        try:
+            dic = {"domain": domain, "names":[]}
+            q = "'{}' site:www.qichacha.com".format(domain)
+            print(q)
+            for i in range(50):
+                search_input.send_keys(u'\ue003')   # clear search input for new search(back-space key)
+            
+            search_input.send_keys(q)
+            search_input.send_keys(u'\ue007')    #press Enter key
+            time.sleep(result_reloading_pause_time + round((random.random() * 150) / 50))  # pause program to new search result be loaded
+
+            try:
+                result_divs = WebDriverWait(browser, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, ".result.c-container"))
+                )
+                result_divs = browser.find_elements_by_css_selector(".result.c-container")
+                
+                for div in result_divs:
+                    if(check_for_matched_domain):
+                        if(domain in div.text):
+                            title_tag = div.find_element_by_css_selector("h3.t")
+                            title = title_tag.text
+                            if("限公司" in title):
+                                name = title.split("限公司")[0] + "限公司"
+                                if("-" in name):
+                                    name = name.split("-")[1]
+                                if("_" in name):
+                                    name = name.split("_")[1]
+                                dic["names"].append(name)
+                    else:
+                        title_tag = div.find_element_by_css_selector("h3.t")
+                        title = title_tag.text
+                        if("限公司" in title):
+                            name = title.split("限公司")[0] + "限公司"
+                            if("-" in name):
+                                name = name.split("-")[1]
+                            if("_" in name):
+                                name = name.split("_")[1]
+                            dic["names"].append(name)  
+            except Exception as e:
+                print("error : ", str(e), " >>> divs not found...")
+            finally:
+                dic["names"] = list(set(dic["names"]))
+                result.append(dic)
+        except Exception as e:
+            print("Error >>> ", str(e))
+            browser.close()
+            # loading browser again
+            try_counter = 0
+            page_loaded = False
+            while((not page_loaded) and (try_counter < 10)):
+                try_counter += 1
+                try:
+                    browser = getSeleniumBrowser(headless=True)
+                    browser.get(baidu_home_url)
+                    search_input = browser.find_element(By.CLASS_NAME, "s_ipt")
+                    #print('search input enabled? ==>', search_input.is_enabled())
+                    page_loaded = True
+                except:
+                    browser.close()
+                    print("baidu main page not loaded successfully...")
+            if(not page_loaded):
+                print("browser not loaded successfully after", try_counter, " try")
+                return result
+            continue
+    #browser.close()
+    return result
 
 
 def scrape_qichacha(query, search_domain=False):
