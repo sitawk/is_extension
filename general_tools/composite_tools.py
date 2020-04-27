@@ -239,7 +239,7 @@ def purify_matched_unmatched_data(data):
     return final_data
 
 def save_logo_from_composite_data(composite_data, file_name):
-    base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_logos")
+    base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "saved_logos")
     if(not os.path.exists(os.path.join(base_path))):
         os.makedirs(os.path.join(base_path))
 
@@ -248,30 +248,38 @@ def save_logo_from_composite_data(composite_data, file_name):
         for logo in composite_data["composite"]["logo"]:
             if(logo["source"] == "company-website"):
                 logo_url = logo["data"]["url"]
+                use_proxy = False
 
                 website = composite_data["input_data"]["website"]
                 website = website.strip("/")
-
-                if(not website in logo_url):
-                    if(logo_url.startswith("/")):
-                        logo_url = "http://" + website + logo_url
+                if(not "http" in logo_url):
+                    if(not website in logo_url):
+                        if(logo_url.startswith("/")):
+                            logo_url = "http://" + website + logo_url
+                        else:
+                            logo_url = "http://" + website + "/" + logo_url
                     else:
-                        logo_url = "http://" + website + "/" + logo_url
-                elif(not "http" in logo_url):
-                        logo_url = "http://" + logo_url
+                            logo_url = "http://" + logo_url
                 break
 
         if(not logo_url):
             logo_url = composite_data["composite"]["logo"][0]["data"]["url"]
+            use_proxy = True
         
         x = logo_url.split('.')[-1]
         ext = x[-3:]
-        if ext[-3:] in ['png', 'jpg', 'peg']:
+        if ext[-3:] in ['png', 'jpg', 'peg', "gif", "tif"]:
             file_path = os.path.join(base_path, file_name + '.' + ext)
         else:
             file_path = os.path.join(base_path, file_name + '.jpg')
 
-        response = getHtmlResponse(logo_url, stream=True, use_proxy=False)
+        response = getHtmlResponse(logo_url, stream=True, use_proxy=use_proxy)
+        if(not response):
+            if("www." not in logo_url):
+                print(logo_url)
+                logo_url = logo_url.replace("http://", "http://www.")
+                print(logo_url)
+                response = getHtmlResponse(logo_url, stream=True, use_proxy=use_proxy)
         if(response):
             with open(file_path, 'wb') as out_file:
                 shutil.copyfileobj(response.raw, out_file)
