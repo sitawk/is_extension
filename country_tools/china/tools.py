@@ -6,6 +6,25 @@ from root.general_tools.tools import getHtmlResponse, getSoup, stringCookiesToDi
 from root.general_tools.composite_tools import get_unique_addresses_for_composite_data
 number_founder_pattern = "[\D]*(\d+)[\D]*"
 
+to_be_deleted_from_address = []
+number_founder_pattern = "[^\d]?(\d+)[^\d]?"
+
+def find_chinese_addresses(text, patterns, is_contact_page=False):
+    found_addresses = []
+    for pattern in patterns:
+        items = re.findall(pattern, text)
+        if(items):
+            for item in items:
+                # cleaning addresses
+                add = re.sub("\n", " ", item[0])
+                add = add.strip()
+                add = re.sub("\s{2,}", " ", add)
+                found_addresses.append(add)
+    return list(set(found_addresses))
+
+def get_chinese_address_parts(address, language="zh-cn"):
+    return {"address":address, "components":[], "source":"company-website"}
+
 def get_chinese_unique_addresses(original_address_list, composite_mode=False):
     if(len(original_address_list) > 1):
         unique_addresses = []
@@ -82,6 +101,55 @@ def get_chinese_unique_addresses(original_address_list, composite_mode=False):
         unique_addresses = original_address_list
 
     return unique_addresses
+
+
+
+def purify_chinese_addresses(address_list):
+    '''
+    get a list of chinese addresses and return a list of unique
+    and splitted addresses extracted from input addresses 
+    '''
+    unique_addresses = get_chinese_unique_addresses(address_list)
+
+    splitted_addresses = []
+    for add in unique_addresses:
+        splitted_addresses.append(get_chinese_address_parts(add))
+    return splitted_addresses
+
+
+def find_chinese_phones(text, patterns):
+    phones = []
+    for pattern in patterns:
+        items = re.findall(pattern, text)
+        for item in items:
+            phones.append(item)
+    return list(set(phones))
+
+def purify_chinese_phones(phone_list):
+    '''
+    This function takes a list of phone numbers as input, extracts all unique 
+    phone numbers from input list and finally return a list of unique phone numbers.
+    '''
+    if(phone_list):
+        if(len(phone_list) == 1):
+            return phone_list
+        else:
+            unique_phones = []
+            filtered_list = [re.sub("[\D]", "", phone)[-10:] for phone in phone_list]
+
+            unique_phones.append({"original": phone_list[0], "filtered":filtered_list[0]})
+            for i in range(1, len(phone_list)):
+                is_unique = True
+                for dic in unique_phones:
+                    if(filtered_list[i] == dic["filtered"]):
+                        is_unique = False
+                        break
+                if(is_unique):
+                    unique_phones.append({"original": phone_list[i], "filtered":filtered_list[i]})
+            return [dic["original"] for dic in unique_phones]
+    else:
+        return []
+
 
 
 def pick_matched_case_for_composite(country_module_data, domain):

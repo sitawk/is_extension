@@ -271,12 +271,12 @@ def save_logo_from_composite_data(composite_data, file_name):
                 break
 
         if(not logo_url):
+            use_proxy = True
             for logo in composite_data["composite"]["logo"]:
                 if(logo["source"] != "company-website"):
                     logo_url = logo["data"]["url"]
                     print("logo url from ", logo["source"], " >>> ", logo_url)
                     break
-                    use_proxy = True
         
         if(logo_url):
             x = logo_url.split('.')[-1]
