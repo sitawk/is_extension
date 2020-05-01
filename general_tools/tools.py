@@ -379,7 +379,7 @@ COUNTRY_CONTEXTS = {
             "address_patterns": [
                 "(" + 
                     "(" +
-                        "(((?<!\n).{,10}rue)|((?<!\n).{,10}boulevard)|((?<!\n).{,10}Av\.))" +
+                        "(((?<!\n).{,10}(?<!\w)rue)|((?<!\n).{,10}boulevard)|((?<!\n).{,10}Av\.))" +
                     ")" +
                     "(" +
                         "[\w\W]{5,70}" +
@@ -405,7 +405,19 @@ COUNTRY_CONTEXTS = {
                 "(\(?\+?\d{2}\)?[\s\.\-]+\(?\d\)?[\s\.\-]+\d{3}[\s\.\-]+\d{2}[\s\.\-]+\d{2})",
                 "(\(?\+?\d{2}\)?[\s\.\-]+\(?\d\)?[\s\.\-]+\d{3}[\s\.\-]+\d[\s\.\-]+\d{3})",
             ],
-            "address_patterns": ["Av[\.]?\s.+","Dirección:\s.+", "Calle[\s].+"],
+            "address_patterns": [
+                "(" + 
+                    "(" +
+                        "((Dirección)|(Carrera)|(Calle)|(Dirc\W)|(Cra\W))" +
+                    ")" +
+                    "(" +
+                        "[\w\W]{3,70}" +
+                    ")" +
+                    "(" +
+                        "((Colombia)|(#\s?\d[^\n]{,25}))" +
+                    ")"
+                ")",
+            ],
             "contact_text": ["contactenos", "Contáctenos", "CONTACTO", "Contáctanos"]
         },
         "korea" : {

@@ -102,14 +102,17 @@ def get_chinese_unique_addresses(original_address_list, composite_mode=False):
 
     return unique_addresses
 
-
+def recheck_chinese_address(address):
+    address = re.sub("(\w*地址[\s:：]+)", "", address, flags=re.IGNORECASE)
+    return address.strip()
 
 def purify_chinese_addresses(address_list):
     '''
     get a list of chinese addresses and return a list of unique
     and splitted addresses extracted from input addresses 
     '''
-    unique_addresses = get_chinese_unique_addresses(address_list)
+    rechecked_addresses = [recheck_chinese_address(add) for add in address_list]
+    unique_addresses = get_chinese_unique_addresses(rechecked_addresses)
 
     splitted_addresses = []
     for add in unique_addresses:

@@ -97,12 +97,17 @@ def get_Colombian_unique_addresses(address_list):
 def get_Colombian_address_parts(address, language="es"):
     return {"address":address, "components":[], "source":"company-website"}
 
+def recheck_Colombian_address(address):
+    address = re.sub("(Dirección[\W]*)|(Dirc[\W]*)", "", address, flags=re.IGNORECASE)
+    return address.strip()
+
 def purify_Colombian_addresses(address_list):
     '''
     get a list of Colombian addresses and return a list of unique
     and splitted addresses extracted from input addresses 
     '''
-    unique_addresses = get_Colombian_unique_addresses(address_list)
+    rechecked_addresses = [recheck_Colombian_address(add) for add in address_list]
+    unique_addresses = get_Colombian_unique_addresses(rechecked_addresses)
 
     splitted_addresses = []
     for add in unique_addresses:
