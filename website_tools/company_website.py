@@ -42,9 +42,12 @@ def find_second_page_url(main_page_soup, url, country_context):
 def get_website_logo(soup_obj):
     if(soup_obj):
         body = soup_obj.body
-        img = body.find('img')
-        if img:
-            return img.get('src')
+        if(body):
+            img = body.find('img')
+            if img:
+                return img.get('src')
+            else:
+                return None
         else:
             return None
 
@@ -107,6 +110,7 @@ def get_website_data(main_page_soup, contact_page_soup, country, country_context
         text = "\n".join(string for string in contact_page_soup.stripped_strings)
         website_data["addresses"] = find_addresses(text[:20000], country_context["address_patterns"], country, is_contact_page=True)
         google_pin_address = get_google_pin_address(contact_page_soup, url, language)
+
         website_data["addresses"] += google_pin_address
 
         website_data["phones"] = find_phones(text, country_context["phone_patterns"], country)

@@ -480,11 +480,29 @@ COUNTRY_CONTEXTS = {
         "indonesia": {
             "language": "id",
             "country_code": "62",
-            "phone_phrases": [],
+            "phone_phrases": ["Telepon", "Telp"],
             "phone_patterns": [],
             "address_patterns": [
+                "(" +
+                    "(" +
+                        "(Address)|(Alamat)|(Jalan)|(Jln\W)|(Jl\W)|(Menara)|([^\n]{,20}Tower)|(OFFICE)|((?<!\w)KANTOR\W)|((?<!\W)Lt\W)|([^\n]{,40}Blok)|(Graha)|(Taman)" +
+                    ")" +
+                    "(" +
+                        "[^}{$@*<>]{5,150}" +
+                    ")" +
+                    "(" +
+                        "(\D\d{5}(?!\w))|(Indonesia)|" +
+                        "(Bangka([\s\-]Belitung)?)|(Banten)|(Bengkulu)|(Gorontalo)|(Sumatera[–\s\-]{1,3}Utara)|(Sumatera[–\s\-]{1,3}Selatan)|(Sumatera[–\s\-]{1,3}Barat)|(Sumatera)|" + 
+                        "(Jakarta[–\s\-]{1,3}Selatan)|(Jakarta[–\s\-]{1,3}Barat)|(Jakarta[–\s\-]{1,3}Utara)|(Jakarta[–\s\-]{1,3}Pusat)|(Jakarta[–\s\-]{1,3}Timur)|(Jakarta)|" + 
+                        "(Kalimantan[–\s\-]{1,3}Selatan)|(Kalimantan[–\s\-]{1,3}Barat)|(Kalimantan[–\s\-]{1,3}Utara)|(Kalimantan[–\s\-]{1,3}Tengah)|(Kalimantan[–\s\-]{1,3}Timur)|(Kalimantan)|" + 
+                        "(Jawa[–\s\-]{1,3}Barat)|(Jawa[–\s\-]{1,3}Timur)|(Jawa[–\s\-]{1,3}Tengah)|(Papua[–\s\-]{1,3}Barat)|(Papua)|(Yogyakarta)|(\WAceh)|(\WBali)|" + 
+                        "(Riau)|(Lampung)|(Maluku)|(Maluku[–\s\-]{1,3}Utara)|(Nusa Tenggara[–\s\-]{1,3}Barat)|(Nusa Tenggara[–\s\-]{1,3}Timur)|(Nusa Tenggara)|" + 
+                        "(Sulawesi[–\s\-]{1,3}Selatan)|(Sulawesi[–\s\-]{1,3}Barat)|(Sulawesi[–\s\-]{1,3}Utara)|(Sulawesi[–\s\-]{1,3}Tenggara)|(Sulawesi[–\s\-]{1,3}Tengah)|(Sulawesi)" +
+                        "(Daerah\s[^\n]{3,25})"
+                    ")" +
+                ")"
             ],
-            "contact_text": ["Kontak", "contact"]
+            "contact_text": ["Kontak", "Hubungi Kami", "contact", "Kontak Kami", "CONTACT US"]
         }
     }
 }
@@ -1158,6 +1176,7 @@ def find_addresses(text, patterns, country, is_contact_page=False):
     elif(country == "indonesia"):
         from root.country_tools.indonesia.tools import find_indonesian_addresses
         addresses = find_indonesian_addresses(text, patterns, is_contact_page)
+
     return addresses
 
 def purify_addresses(address_list, country, original_source):
