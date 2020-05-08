@@ -20,38 +20,29 @@ def find_indonesian_addresses(text, patterns, is_contact_page=False):
 def get_indonesian_unique_addresses(address_list):
     unique_addresses = []
     if(len(address_list) > 1):
-        filtered_add_list = [" " + add for add in address_list]
-        filtered_add_list = [add.lower() for add in filtered_add_list]
-        temp_list = [add for add in filtered_add_list]
-        filtered_add_list = []
-        # deleting common words
-        for add in temp_list:
+        filtered_add_list = [add.lower() for add in address_list]
+
+        for index, add in enumerate(filtered_add_list):
+            # deleting common words
             for phrase in to_be_deleted_from_address:
                 add = add.replace(phrase, " ")
-            filtered_add_list.append(add)
-        temp_list = [add for add in filtered_add_list]
-        filtered_add_list = []
-        for add in temp_list:
-            add = add.split(" ")
-            filtered_add_list.append(add)
-        
-        temp_list = [add for add in filtered_add_list]
-        filtered_add_list = []
-        # extracting all numbers
-        for splitted_list in temp_list:
+
+            # splitting addresses on space
+            splitted_list = add.split(" ")
+
+            # extracting all numbers
             word_list = []
             for word in splitted_list:
                 m = re.search(number_founder_pattern, word)
                 if(m):
                     word_list.append(m.group(1))
-                    word = re.sub(m.group(0), " ", word)
+                    word = word.replace(m.group(0), " ")
                 word = (re.sub("\s{2,}", " ", word)).strip()
                 if(not word.endswith(".")):
                     if(len(word) >= 2):
                         word_list.append(word)
             word_list = list(set(word_list))
-            filtered_add_list.append(word_list)
-
+            filtered_add_list[index] = word_list
         # getting unique addresses
         max_length = 0
         max_index = 0
@@ -96,29 +87,31 @@ def get_indonesian_unique_addresses(address_list):
 def get_indonesian_address_parts(address, language="id"):
     return {"address":address, "components":[], "source":"company-website"}
 
+
 def recheck_indonesian_address(address):
+    address = re.sub('"|\(|\)', " ", address)
     m = re.search("(^address[\W]+)", address, flags=re.IGNORECASE)
     if(m):
-        address = re.sub(m.group(0), "", address)
+        address = address.replace(m.group(0), "")
     
     m = re.search("(^Alamat[\W]+)", address, flags=re.IGNORECASE)
     if(m):
-        address = re.sub(m.group(0), "", address)
+        address = address.replace(m.group(0), "")
     
     m = re.search("(^OFFICE[\W]+)", address, flags=re.IGNORECASE)
     if(m):
-        address = re.sub(m.group(0), "", address)
+        address = address.replace(m.group(0), "")
     
     m = re.search("(^KANTOR[\W]+)", address, flags=re.IGNORECASE)
     if(m):
-        address = re.sub(m.group(0), "", address)
+        address = address.replace(m.group(0), "")
 
     m = re.search("(postalCode[\W]+)", address, flags=re.IGNORECASE)
     if(m):
-        address = re.sub(m.group(0), "", address)
+        address = address.replace(m.group(0), "")
 
-    address = re.sub("\n", ", ", address)
-    address = re.sub('"|\(|\)', " ", address)
+    address = address.replace("\\n", ", ")
+    address = re.sub(",\W*,", ", ", address)
     address = re.sub(" ,", ",", address)
     address = re.sub("\s{2,}", " ", address)
     return address
